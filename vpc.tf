@@ -106,3 +106,31 @@ resource "aws_route_table_association" "private_2" {
 resource "aws_eip" "eip" {
   instance = aws_instance.ec2_instance.id
 }
+
+# Security Groups
+resource "aws_security_group" "allow_ssh" {
+  name = "${var.environment}-${var.namespace}-sg-ssh"
+  description = "Allow SSH inbound traffic"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description      = "SSH access to EC2"
+    from_port        = 22
+    to_port          = 22
+    protocol         = "tcp"
+    cidr_blocks      = [var.local_public_ip]
+  }
+
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
+
+  tags = merge(local.common_tags, {
+    Name = "${var.environment}-${var.namespace}-sg-ssh"
+  })
+}
+

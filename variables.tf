@@ -29,3 +29,11 @@ variable "instance_type" {
     description = "Type of EC2 instance"
     default     = "t3a.micro"
 }
+
+variable "ssh_public_key" {
+    description = "Public key for ssh access"
+}
+
+variable "local_public_ip" {
+    description = "Pocal public IP for allowing ssh access via security group"
+}

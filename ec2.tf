@@ -3,8 +3,10 @@ data "aws_ami" "amazon_linux" {
   most_recent = true
 
   filter {
+    # NOTE: minimal AL2023 AMI does not have amazon-ssm-agent installed by default
+    # -> yum info amazon-ssm-agent
     name   = "name"
-    values = ["al2023-ami-minimal-*"]
+    values = ["al2023-ami-2023*"]
   }
 
   filter {
@@ -29,9 +31,19 @@ resource "aws_eip_association" "eip_assoc" {
 # EC2 Network Inferface
 resource "aws_network_interface" "nw_interface" {
   subnet_id   = aws_subnet.public_1.id
+  security_groups = [aws_security_group.allow_ssh.id]
+
+  tags = merge(local.common_tags, { 
+    Name = "${var.environment}-${var.namespace}-nw-interface"
+  })
+}
+
+# SSH keypair
+resource "aws_key_pair" "ssh_access_key" {
+  public_key = var.ssh_public_key
 
   tags = merge(local.common_tags, {
-    Name = "${var.environment}-${var.namespace}-nw-interface"
+    Name = "${var.environment}-${var.namespace}-keypair"
   })
 }
 
@@ -39,16 +51,20 @@ resource "aws_network_interface" "nw_interface" {
 resource "aws_instance" "ec2_instance" {
   ami           = data.aws_ami.amazon_linux.id
   instance_type = var.instance_type
+  key_name = aws_key_pair.ssh_access_key.key_name
 
   network_interface {
     network_interface_id = aws_network_interface.nw_interface.id
     device_index         = 0
   }
 
+  iam_instance_profile = aws_iam_instance_profile.ec2_instance_profile.name
+
+
   tags = merge(local.common_tags, {
     Name = "${var.environment}-${var.namespace}-ec2-instance"
   })
 }
 
-# TODO: Fix connection by adding security groups lol
+
  
