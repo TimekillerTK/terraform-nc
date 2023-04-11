@@ -1,7 +1,6 @@
 variable "environment" {
     description = "Envrionment, like dev/tst/acc/prd"
     default     = "dev"
-
 }
 
 variable "namespace" {
